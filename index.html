@@ -9,7 +9,7 @@
     --amber:#ff5f40; --amber-bright:#ff9f43; --foam:#fff8f0;
     --bg0:#ddf2fd; --bg1:#b3e0f7; --card:rgba(255,255,255,.86);
     --line:rgba(26,58,100,.15); --text:#1a3a5c; --muted:#5a8aaa;
-    --red:#e2503b; --green:#2daa60;
+    --red:#fa745f; --green:#2daa60;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
@@ -398,11 +398,11 @@
   var ADMIN_PASS = "brewcon26";
 
   var DIMS = [
-    {key:"froth",      label:"Froth",      low:"Flat",  high:"Overflowing", froth:true},
+    {key:"froth",      label:"Froth Factor",      low:"Uninspired",  high:"Very Exciting", froth:true},
     {key:"appearance", label:"Appearance", low:"Ugly",  high:"Stunning"},
-    {key:"aroma",      label:"Smell",      low:"Faint", high:"Heavenly"},
-    {key:"taste",      label:"Taste",      low:"Meh",   high:"Incredible"},
-    {key:"overall",    label:"Overall",    low:"Nah",   high:"Obsessed"}
+    {key:"aroma",      label:"Smell",      low:"Offputting", high:"Arousing"},
+    {key:"taste",      label:"Taste",      low:"Tepid",   high:"Flavour Bomb"},
+    {key:"overall",    label:"Overall",    low:"Not it",   high:"I'm Obsessed"}
   ];
   var SCOREDIMS = ["overall","taste","appearance","aroma","froth"];
 
