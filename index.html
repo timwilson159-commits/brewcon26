@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>BREWCON 2026 — Beer Tasting Vote</title>
+<style>
+  :root{
+    --amber:#ff5f40; --amber-bright:#ff9f43; --foam:#fff8f0;
+    --bg0:#ddf2fd; --bg1:#b3e0f7; --card:rgba(255,255,255,.86);
+    --line:rgba(26,58,100,.15); --text:#1a3a5c; --muted:#5a8aaa;
+    --red:#e2503b; --green:#2daa60;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(170deg, #0ea5e9 0%, #38bdf8 22%, #7dd3fc 44%, #e0f7ff 64%, #fef3c7 82%, #fde68a 100%);
+    color:var(--text); min-height:100vh; min-height:100dvh;
+  }
+  .app{max-width:440px; margin:0 auto; padding:14px 14px 36px;}
+  .hidden{display:none !important;}
+
+  header{display:flex; align-items:center; justify-content:space-between; margin:6px 2px 8px;}
+  .title{font-weight:800; letter-spacing:.3px; font-size:17px;}
+  .title .hop{color:var(--amber);}
+  .progtext{font-size:12px; color:var(--muted);}
+  .progtext b{color:var(--amber-bright);}
+  .progbar{height:5px; border-radius:999px; background:rgba(26,58,100,.12); overflow:hidden; margin:2px 2px 14px;}
+  .progbar i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--amber),var(--amber-bright)); transition:width .3s;}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:20px; padding:14px 14px 18px; backdrop-filter:blur(8px); box-shadow:0 4px 24px rgba(0,80,180,.10);}
+
+  .position{display:flex; align-items:center; justify-content:center; gap:8px; margin:2px auto 12px; padding:8px 16px;
+    border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.55); color:var(--muted);
+    font-size:12px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; cursor:pointer; width:max-content;}
+  .position svg{width:14px; height:14px; fill:var(--amber);}
+
+  .beerhead{text-align:center; margin-bottom:6px;}
+  .beerhead .ord{display:inline-block; min-width:26px; height:26px; line-height:26px; border-radius:999px;
+    background:var(--amber); color:#fff; font-weight:800; font-size:13px; margin-bottom:6px; padding:0 8px;}
+  .beerhead .name{font-size:22px; font-weight:800; line-height:1.15;}
+  .beerhead .meta{font-size:13px; color:var(--muted); margin-top:3px;}
+  .beerhead .abvpill{display:inline-block; background:rgba(255,95,64,.12); color:var(--amber);
+    font-size:12px; font-weight:800; border-radius:999px; padding:3px 11px; margin-top:5px;}
+
+  .sliders{margin-top:14px;}
+  .srow{margin:7px 4px;}
+  .srow .lab{display:flex; justify-content:space-between; align-items:baseline; font-size:12px; color:var(--muted); margin-bottom:5px;}
+  .srow .lab .dim{color:var(--text); font-weight:700; font-size:13px;}
+  .srow.froth .lab .dim{color:var(--amber);}
+  .frothDesc{font-size:10px; font-weight:400; color:var(--muted); font-style:italic; margin-left:4px;}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:14px; border-radius:999px; outline:none;
+    background:linear-gradient(90deg, hsl(0,72%,48%), hsl(50,78%,50%), hsl(130,58%,42%));}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:30px; height:30px; border-radius:50%;
+    background:var(--thumb,#ffce54); border:3px solid rgba(255,255,255,.9); box-shadow:0 2px 6px rgba(0,0,0,.25); cursor:grab;}
+  input[type=range].froth::-webkit-slider-thumb{border-color:var(--foam);}
+  input[type=range]::-moz-range-thumb{width:30px; height:30px; border-radius:50%; background:var(--thumb,#ffce54); border:3px solid rgba(255,255,255,.9); cursor:grab;}
+  input[type=range].froth::-moz-range-thumb{border-color:var(--foam);}
+  .anchors{display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:4px;}
+
+  .radarWrap{display:flex; justify-content:center; padding:20px 26px 4px;}
+  svg#radar{overflow:visible; touch-action:none; width:100%; max-width:280px; height:auto;}
+  .ring{fill:none; stroke:rgba(26,58,100,.10);}
+  .spoke{stroke:rgba(26,58,100,.16);}
+  .poly{stroke-width:2.5; stroke-linejoin:round;}
+  .axislabel{fill:var(--text); font-size:13px; font-weight:700;}
+  .axislabel.froth{fill:var(--amber);}
+  .handle{stroke:rgba(255,255,255,.88); stroke-width:2; cursor:grab;}
+  .handle.froth{stroke:var(--foam); stroke-width:3;}
+  .hit{fill:transparent;}
+
+  .frothNote{text-align:center; font-size:12px; color:var(--muted); margin:8px 0 2px;}
+  .frothNote b{color:var(--amber);}
+
+  .navbtns{display:flex; gap:10px; margin-top:18px;}
+  .navbtns button{flex:1; padding:14px; border-radius:14px; border:1px solid var(--line); font-weight:800; font-size:15px; cursor:pointer;}
+  .navbtns button:disabled{opacity:.4; cursor:default;}
+  .btn-prev{background:rgba(255,255,255,.5); color:var(--text); flex:0 0 33%;}
+  .btn-next{background:var(--amber); color:#fff; border-color:var(--amber);}
+  .saved{height:18px; text-align:center; font-size:12px; color:var(--green); margin-top:10px; opacity:0; transition:opacity .25s;}
+  .saved.show{opacity:1;}
+
+  footer{text-align:center; margin-top:18px; font-size:12px; color:var(--muted); display:flex; gap:10px; justify-content:center;}
+  footer button{background:rgba(255,255,255,.5); border:1px solid var(--line); color:var(--muted); border-radius:10px; padding:7px 14px; font-size:12px; cursor:pointer;}
+
+  /* ===== jump sheet ===== */
+  .sheet{position:fixed; inset:0; z-index:50; display:none;}
+  .sheet.open{display:block;}
+  .sheet .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.45);}
+  .sheet .panel{position:absolute; left:0; right:0; bottom:0; max-width:440px; margin:0 auto;
+    background:#f0f9ff; border:1px solid var(--line); border-bottom:0; border-radius:20px 20px 0 0;
+    max-height:82vh; display:flex; flex-direction:column; animation:slideup .22s ease;}
+  @keyframes slideup{from{transform:translateY(100%);} to{transform:translateY(0);}}
+  .sheet .grip{width:40px; height:4px; border-radius:999px; background:rgba(26,58,100,.20); margin:10px auto 6px;}
+  .sheet .shead{display:flex; align-items:center; justify-content:space-between; padding:4px 16px 10px; border-bottom:1px solid var(--line);}
+  .sheet .shead .t{font-weight:800; font-size:15px; color:var(--text);}
+  .sheet .shead .x{background:transparent; border:0; color:var(--muted); font-size:22px; line-height:1; cursor:pointer;}
+  .sheet .list{overflow-y:auto; padding:6px 8px 18px;}
+  .sheet .item{display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:transparent; border:0;
+    color:var(--text); padding:11px 10px; border-radius:12px; cursor:pointer;}
+  .sheet .item:active{background:rgba(26,58,100,.06);}
+  .sheet .item.active{background:rgba(255,95,64,.10); box-shadow:inset 3px 0 0 var(--amber);}
+  .sheet .item .badge{flex:0 0 auto; width:28px; height:28px; line-height:28px; text-align:center; border-radius:999px;
+    background:rgba(26,58,100,.10); color:var(--muted); font-weight:800; font-size:12px;}
+  .sheet .item.active .badge{background:var(--amber); color:#fff;}
+  .sheet .item .info{flex:1 1 auto; min-width:0;}
+  .sheet .item .info .nm{font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sheet .item .info .st{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sheet .item .tick{flex:0 0 auto; color:var(--green); font-weight:800;}
+
+  /* ===== admin ===== */
+  .adminHead{display:flex; align-items:center; gap:10px; margin:6px 2px 14px;}
+  .adminHead .back{background:rgba(255,255,255,.55); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:7px 12px; font-size:13px; font-weight:700; cursor:pointer;}
+  .adminHead .h{font-weight:800; font-size:18px;}
+  .tabs{display:flex; gap:8px; margin:0 2px 14px;}
+  .tabs button{flex:1; padding:10px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.4); color:var(--muted); font-weight:700; font-size:13px; cursor:pointer;}
+  .tabs button.on{background:var(--amber); color:#fff; border-color:var(--amber);}
+  .adrop{display:block; width:100%; margin:2px 0 16px; appearance:none; -webkit-appearance:none; cursor:pointer;
+    background:rgba(255,255,255,.82); color:var(--text); border:1px solid var(--line); border-radius:12px;
+    padding:14px 42px 14px 15px; font-size:16px; font-weight:800; font-family:inherit;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff5f40' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 12px center; background-size:22px;}
+  .adrop:focus{outline:none; border-color:var(--amber);}
+  .adrop option{background:#f0f9ff; color:var(--text); font-weight:700;}
+  .note{font-size:12px; color:var(--muted); line-height:1.5; background:rgba(255,255,255,.65); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:14px;}
+  .note b{color:var(--text);}
+  .note code{font-family:monospace; font-size:11px; background:rgba(26,58,100,.07); padding:1px 5px; border-radius:4px;}
+
+  .sech{font-size:13px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); margin:18px 2px 8px;}
+  .awardCard{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px 14px; margin-bottom:12px;}
+  .awardCard h4{margin:0 0 8px; font-size:15px; color:var(--text);}
+  .awardCard .excl{font-size:11px; color:var(--muted); font-style:italic; margin-bottom:8px;}
+  .rrow{display:flex; align-items:center; gap:10px; padding:6px 0; font-size:14px; border-top:1px solid rgba(26,58,100,.07);}
+  .rrow:first-of-type{border-top:0;}
+  .rrow.top{font-weight:800;}
+  .rrow .pos{flex:0 0 auto; width:26px; text-align:center; font-size:15px;}
+  .rrow .rinfo{flex:1 1 auto; min-width:0;}
+  .rrow .rn{font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rrow .rmeta{font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px;}
+  .rrow .rs{flex:0 0 auto; font-variant-numeric:tabular-nums; color:var(--amber); font-weight:700; white-space:nowrap;}
+  .pentag{font-size:10px; background:var(--red); color:#fff; border-radius:5px; padding:1px 5px; margin-left:6px; vertical-align:middle; font-weight:800;}
+
+  .novGrid{display:grid; grid-template-columns:1fr; gap:10px;}
+  .novCard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:11px 13px;}
+  .novCard .nt{font-size:13px; color:var(--amber); font-weight:800;}
+  .novCard .nw{font-size:16px; font-weight:800; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .novCard .nv{font-size:12px; color:var(--amber-bright); margin-top:2px;}
+  .novCard .nd{font-size:11px; color:var(--muted); margin-top:7px; line-height:1.45;}
+
+  .addForm{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;}
+  .addForm input{grid-column:span 2; background:rgba(255,255,255,.82); border:1px solid var(--line); border-radius:10px; padding:11px 12px; color:var(--text); font-size:14px; font-family:inherit;}
+  .addForm input.half{grid-column:span 1;}
+  .addForm button{grid-column:span 2; background:var(--amber); color:#fff; border:0; border-radius:10px; padding:12px; font-weight:800; font-size:14px; cursor:pointer; font-family:inherit;}
+
+  .rosRow{display:flex; align-items:center; gap:10px; padding:9px 4px; border-top:1px solid rgba(26,58,100,.07);}
+  .rosRow .badge{flex:0 0 auto; width:26px; height:26px; line-height:26px; text-align:center; border-radius:999px; background:rgba(26,58,100,.10); color:var(--muted); font-weight:800; font-size:12px;}
+  .rosRow .info{flex:1 1 auto; min-width:0;}
+  .rosRow .info .nm{font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rosRow .info .st{font-size:12px; color:var(--muted);}
+  .rosRow.pen .info .nm{color:var(--red);}
+  .penlabel{flex:0 0 auto; display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); cursor:pointer; user-select:none;}
+  .penlabel input{width:20px; height:20px; accent-color:var(--red);}
+  .newtag{font-size:10px; background:var(--green); color:#fff; border-radius:5px; padding:1px 5px; margin-left:6px; font-weight:800;}
+
+  /* bulk import */
+  .bulkArea{width:100%; background:rgba(255,255,255,.82); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; color:var(--text); font-size:12px; font-family:monospace; resize:vertical; min-height:76px; display:block;}
+  .bulkArea::placeholder{color:var(--muted); font-style:italic; font-family:inherit;}
+  .bulkBtn{display:block; width:100%; background:var(--amber); color:#fff; border:0; border-radius:10px;
+    padding:11px; font-weight:800; font-size:14px; cursor:pointer; margin-top:8px; font-family:inherit;}
+  .bulkMsg{font-size:12px; color:var(--green); margin-top:6px; min-height:18px;}
+  .bulkMsg.err{color:var(--red);}
+
+  /* voter table */
+  .vtable{width:100%; border-collapse:collapse; font-size:13px; margin-top:10px;}
+  .vtable th{text-align:left; font-size:11px; font-weight:800; letter-spacing:.5px; text-transform:uppercase;
+    color:var(--muted); padding:4px 8px 6px; border-bottom:2px solid var(--line);}
+  .vtable td{padding:7px 8px; border-bottom:1px solid rgba(26,58,100,.07); color:var(--text);}
+  .vtable tr:last-child td{border-bottom:0;}
+  .vcode{font-family:monospace; font-weight:800; font-size:15px; color:var(--amber); letter-spacing:3px;}
+  .copyAllBtn{background:rgba(26,58,100,.08); border:1px solid var(--line); border-radius:8px;
+    padding:5px 12px; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; font-family:inherit;}
+
+  /* admin password modal */
+  .pwModal{position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.5);
+    display:flex; align-items:center; justify-content:center;}
+  .pwBox{background:#f0f9ff; border-radius:20px; padding:28px 24px; width:min(320px,90vw); text-align:center; box-shadow:0 8px 32px rgba(0,0,0,.2);}
+  .pwBox h3{margin:0 0 6px; font-size:18px; color:var(--text);}
+  .pwBox p{font-size:13px; color:var(--muted); margin:0 0 18px;}
+  .pwBox input{width:100%; background:rgba(255,255,255,.9); border:1px solid var(--line); border-radius:10px;
+    padding:12px; font-size:18px; text-align:center; letter-spacing:4px; color:var(--text);
+    margin-bottom:10px; font-family:inherit;}
+  .pwBox input:focus{outline:none; border-color:var(--amber);}
+  .pwBox .go{width:100%; background:var(--amber); color:#fff; border:0; border-radius:10px;
+    padding:13px; font-weight:800; font-size:15px; cursor:pointer; font-family:inherit;}
+  .pwBox .perr{color:var(--red); font-size:13px; min-height:20px; margin-top:8px;}
+
+  /* login screen */
+  .loginCard{background:var(--card); border:1px solid var(--line); border-radius:24px; padding:32px 24px;
+    backdrop-filter:blur(8px); box-shadow:0 4px 24px rgba(0,80,180,.10); text-align:center; margin-top:20px;}
+  .loginCard .logo{font-size:40px; margin-bottom:8px;}
+  .loginCard h2{font-size:28px; font-weight:900; margin:0 0 4px; letter-spacing:-.5px;}
+  .loginCard .sub{font-size:14px; color:var(--muted); margin-bottom:28px;}
+  .loginCard label{display:block; text-align:left; font-weight:700; font-size:12px; letter-spacing:.5px;
+    text-transform:uppercase; margin-bottom:7px; color:var(--muted);}
+  .loginCard input{width:100%; background:rgba(255,255,255,.9); border:2px solid var(--line); border-radius:14px;
+    padding:16px; font-size:26px; text-align:center; letter-spacing:8px; text-transform:uppercase;
+    color:var(--text); font-weight:900; font-family:monospace;}
+  .loginCard input:focus{outline:none; border-color:var(--amber); box-shadow:0 0 0 3px rgba(255,95,64,.15);}
+  .loginCard .voterName{font-size:16px; font-weight:800; color:var(--text); margin:10px 0 16px; min-height:26px;}
+  .loginCard .go{width:100%; background:var(--amber); color:#fff; border:0; border-radius:14px;
+    padding:16px; font-weight:800; font-size:17px; cursor:pointer; margin-top:4px; font-family:inherit;}
+  .loginCard .go:disabled{opacity:.35; cursor:default;}
+  .loginCard .lerr{color:var(--red); font-size:13px; min-height:20px; margin-top:8px;}
+
+  /* completion screen */
+  .doneCard{background:var(--card); border:1px solid var(--line); border-radius:24px; padding:32px 24px;
+    backdrop-filter:blur(8px); box-shadow:0 4px 24px rgba(0,80,180,.10); text-align:center; margin-top:20px;}
+  .doneCard .bigEmoji{font-size:64px; display:block; margin-bottom:12px;}
+  .doneCard h2{font-size:26px; font-weight:900; margin:0 0 8px;}
+  .doneCard .sub{font-size:15px; color:var(--muted); margin-bottom:22px; line-height:1.55;}
+  .doneStat{display:flex; justify-content:center; gap:28px; flex-wrap:wrap; margin:16px 0 20px;}
+  .doneStat .sbox .sv{font-size:32px; font-weight:900; color:var(--amber); display:block;}
+  .doneStat .sbox .sl{font-size:12px; color:var(--muted); font-weight:600; margin-top:2px;}
+  .doneCard .goBack{width:100%; background:rgba(255,255,255,.55); color:var(--text); border:1px solid var(--line);
+    border-radius:14px; padding:14px; font-weight:800; font-size:15px; cursor:pointer; font-family:inherit;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== LOGIN VIEW ===== -->
+  <div id="loginView">
+    <div class="loginCard">
+      <div class="logo">🍺</div>
+      <h2>BREWCON <span style="color:var(--amber)">2026</span></h2>
+      <div class="sub">Enter your voter code to start tasting</div>
+      <label>Your voter code</label>
+      <input id="codeInput" type="text" maxlength="4" placeholder="ABCD" autocomplete="off" autocorrect="off" spellcheck="false"/>
+      <div class="voterName" id="voterNameDisplay">&nbsp;</div>
+      <button class="go" id="loginBtn" disabled>Let's taste! 🍻</button>
+      <div class="lerr" id="loginErr"></div>
+    </div>
+  </div>
+
+  <!-- ===== VOTING VIEW ===== -->
+  <div id="voteView" class="hidden">
+    <header>
+      <div class="title">🍺 BREWCON <span class="hop">2026</span></div>
+      <div class="progtext"><b id="pcount">0</b> of <span id="ptotal">0</span> rated</div>
+    </header>
+    <div class="progbar"><i id="progfill"></i></div>
+
+    <main class="card">
+      <button class="position" id="posPill">
+        <svg viewBox="0 0 24 24"><path d="M3 5h8v6H3V5zm10 0h8v6h-8V5zM3 13h8v6H3v-6zm10 0h8v6h-8v-6z"/></svg>
+        <span id="posText">Beer 1 of 25</span>
+      </button>
+
+      <div class="beerhead">
+        <div class="ord" id="beerOrd">#1</div>
+        <div class="name" id="beerName">—</div>
+        <div class="meta" id="beerMeta">—</div>
+        <div class="abvpill" id="beerAbv" style="display:none"></div>
+      </div>
+
+      <div class="sliders" id="sliders"></div>
+
+      <div class="radarWrap"><svg id="radar" viewBox="0 0 300 300"></svg></div>
+      <div class="frothNote"><b>Froth Factor</b> supercharges this beer's total score</div>
+
+      <div class="navbtns">
+        <button class="btn-prev" id="prevBtn">&#8249; Prev</button>
+        <button class="btn-next" id="nextBtn">Next beer &#8250;</button>
+      </div>
+      <div class="saved" id="saved">Saved ✓</div>
+    </main>
+
+    <footer>
+      <button id="resetBtn">Reset all</button>
+      <button id="adminBtn">⚙ Admin panel</button>
+    </footer>
+  </div>
+
+  <!-- ===== DONE VIEW ===== -->
+  <div id="doneView" class="hidden">
+    <header>
+      <div class="title">🍺 BREWCON <span class="hop">2026</span></div>
+    </header>
+    <div class="doneCard">
+      <span class="bigEmoji">🎉</span>
+      <h2>Mission Accomplished!</h2>
+      <div class="sub">Your votes have been saved to this device.<br>Thanks for tasting with us today!</div>
+      <div class="doneStat">
+        <div class="sbox"><span class="sv" id="doneRated">0</span><div class="sl">Beers Rated</div></div>
+        <div class="sbox"><span class="sv" id="doneTotal">0</span><div class="sl">Total Beers</div></div>
+        <div class="sbox"><span class="sv" id="donePct">0%</span><div class="sl">Complete</div></div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:18px;">You can still go back and update any rating.</div>
+      <button class="goBack" id="doneBack">&#8249; Back to voting</button>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN VIEW ===== -->
+  <div id="adminView" class="hidden">
+    <div class="adminHead">
+      <button class="back" id="backBtn">&#8249; Voting</button>
+      <div class="h">Admin Panel</div>
+    </div>
+    <div class="tabs">
+      <button id="tabResults" class="on">Results</button>
+      <button id="tabRoster">Beers</button>
+      <button id="tabVoters">Voters</button>
+    </div>
+
+    <!-- Results pane -->
+    <div id="resultsPane">
+      <div class="note">
+        Showing <b>simulated demo votes</b> so awards populate. Rules applied live:
+        the <b>Best Beer</b> winner is removed from other main awards (but can still take novelty awards);
+        <b>penalised</b> beers place no higher than 6th and can't win bonus awards.
+      </div>
+      <div id="resultsBody"></div>
+    </div>
+
+    <!-- Beers / Roster pane -->
+    <div id="rosterPane" class="hidden">
+      <div class="sech">Bulk import beer list</div>
+      <div class="note">
+        Format: <code>number,name,abv,style;</code> — semicolon between each entry.<br>
+        Example: <code>1,Sunrise Saison,4.8%,Farmhouse Saison;2,Golden Hour,5.2%,Hazy Pale Ale;</code><br>
+        <b>This replaces the current beer roster.</b>
+      </div>
+      <textarea class="bulkArea" id="bulkBeerInput" rows="4" placeholder="1,Beer Name,5.0%,Pale Ale;2,Another Beer,6.5%,IPA;"></textarea>
+      <button class="bulkBtn" id="bulkBeerBtn">Import beer list (replaces roster)</button>
+      <div class="bulkMsg" id="bulkBeerMsg"></div>
+
+      <div class="sech">Add a single beer</div>
+      <div class="addForm">
+        <input id="addName" type="text" placeholder="Beer name (required)"/>
+        <input id="addBrew" class="half" type="text" placeholder="Brewery"/>
+        <input id="addAbv" class="half" type="text" placeholder="ABV e.g. 5.2%"/>
+        <input id="addStyle" type="text" placeholder="Style"/>
+        <button id="addBtn">+ Add to roster</button>
+      </div>
+
+      <div class="sech">Full roster · tick to penalise (cheating)</div>
+      <div id="rosterBody"></div>
+    </div>
+
+    <!-- Voters pane -->
+    <div id="votersPane" class="hidden">
+      <div class="sech">Bulk import voters</div>
+      <div class="note">
+        One entry per line. Format: <code>Name,CODE</code> — the code is optional; if omitted one is auto-generated.<br>
+        Codes must be 2–6 letters/numbers. If a code is already taken the line is skipped and flagged.<br>
+        If no voters are registered, the app runs in <b>open mode</b> (any 4-char code works).
+      </div>
+      <textarea class="bulkArea" id="bulkVoterInput" rows="5" placeholder="Alice Smith,ALCE&#10;Bob Jones,BOB2&#10;Carol White&#10;Dave Brown,DAVE"></textarea>
+      <button class="bulkBtn" id="bulkVoterBtn">Import voter list</button>
+      <div class="bulkMsg" id="bulkVoterMsg"></div>
+      <div id="voterTableWrap"></div>
+    </div>
+  </div>
+
+</div><!-- .app -->
+
+<!-- jump sheet -->
+<div class="sheet" id="sheet">
+  <div class="backdrop" id="sheetBackdrop"></div>
+  <div class="panel">
+    <div class="grip"></div>
+    <div class="shead">
+      <div class="t">Jump to a beer</div>
+      <button class="x" id="sheetClose">&#215;</button>
+    </div>
+    <div class="list" id="sheetList"></div>
+  </div>
+</div>
+
+<!-- admin password modal -->
+<div class="pwModal hidden" id="pwModal">
+  <div class="pwBox">
+    <h3>🔒 Admin Access</h3>
+    <p>Enter the admin password to continue</p>
+    <input id="pwInput" type="password" placeholder="Password" autocomplete="off"/>
+    <button class="go" id="pwGo">Unlock</button>
+    <div class="perr" id="pwErr"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---- configurable ---- */
+  var ADMIN_PASS = "brewcon26";
+
+  var DIMS = [
+    {key:"froth",      label:"Froth",      low:"Flat",  high:"Overflowing", froth:true},
+    {key:"appearance", label:"Appearance", low:"Ugly",  high:"Stunning"},
+    {key:"aroma",      label:"Smell",      low:"Faint", high:"Heavenly"},
+    {key:"taste",      label:"Taste",      low:"Meh",   high:"Incredible"},
+    {key:"overall",    label:"Overall",    low:"Nah",   high:"Obsessed"}
+  ];
+  var SCOREDIMS = ["overall","taste","appearance","aroma","froth"];
+
+  var BASE_BEERS = [
+    {id:"b01", name:"Sunrise Saison",    brewery:"Meadowlark",        abv:"4.8%", style:"Farmhouse Saison"},
+    {id:"b02", name:"Golden Hour",       brewery:"Sunny Coast",       abv:"5.2%", style:"Hazy Pale Ale"},
+    {id:"b03", name:"Crisp & Clean",     brewery:"Northside Lager",   abv:"4.2%", style:"Pilsner"},
+    {id:"b04", name:"Citra Punch",       brewery:"Hop Theory",        abv:"6.8%", style:"West Coast IPA"},
+    {id:"b05", name:"Cloud Machine",     brewery:"Vapor Trail",       abv:"8.5%", style:"Hazy Double IPA"},
+    {id:"b06", name:"Funhouse Sour",     brewery:"Wild Yeast Co.",    abv:"4.4%", style:"Raspberry Gose"},
+    {id:"b07", name:"Pucker Up",         brewery:"Brett & Co.",       abv:"3.8%", style:"Lime Berliner Weisse"},
+    {id:"b08", name:"Amber Alibi",       brewery:"Old Tom's",         abv:"5.0%", style:"Amber Ale"},
+    {id:"b09", name:"Red Right Hand",    brewery:"Ironbark",          abv:"4.6%", style:"Irish Red Ale"},
+    {id:"b10", name:"Brown Study",       brewery:"Cellar Door",       abv:"4.9%", style:"English Brown Ale"},
+    {id:"b11", name:"Hazel's Nut",       brewery:"Squirrel Stash",    abv:"5.3%", style:"Hazelnut Brown"},
+    {id:"b12", name:"Porter House",      brewery:"Dockside",          abv:"6.1%", style:"Robust Porter"},
+    {id:"b13", name:"Midnight Stout",    brewery:"Cellar Door",       abv:"9.0%", style:"Imperial Stout"},
+    {id:"b14", name:"Espresso Yourself", brewery:"Daybreak Roasters", abv:"7.5%", style:"Coffee Stout"},
+    {id:"b15", name:"Smoke & Mirrors",   brewery:"Ashfield",          abv:"5.5%", style:"Rauchbier"},
+    {id:"b16", name:"Belgian Whisper",   brewery:"Abbey Road",        abv:"6.8%", style:"Belgian Dubbel"},
+    {id:"b17", name:"Triple Threat",     brewery:"Abbey Road",        abv:"9.2%", style:"Belgian Tripel"},
+    {id:"b18", name:"Tropic Thunder",    brewery:"Island Time",       abv:"6.4%", style:"Mango IPA"},
+    {id:"b19", name:"Hop Harvest",       brewery:"Green Acres",       abv:"5.7%", style:"Fresh Hop Pale"},
+    {id:"b20", name:"Bitter End",        brewery:"Hopworks",          abv:"3.9%", style:"English Bitter"},
+    {id:"b21", name:"Wee Heavy Heart",   brewery:"Highland",          abv:"8.8%", style:"Scotch Ale"},
+    {id:"b22", name:"Barrel No. 7",      brewery:"Oakheart",          abv:"11.5%",style:"Barrel-Aged Barleywine"},
+    {id:"b23", name:"Sour Grapes",       brewery:"Vintage Yeast",     abv:"5.8%", style:"Wine-Barrel Sour"},
+    {id:"b24", name:"Vanilla Sky",       brewery:"Sweet Tooth",       abv:"4.5%", style:"Vanilla Cream Ale"},
+    {id:"b25", name:"Last Call",         brewery:"Nightcap",          abv:"10.8%",style:"Imperial Dessert Stout"}
+  ];
+
+  /* ---- localStorage keys (v5 — new schema with abv + voters) ---- */
+  var LS_VOTES   = "bfp_votes_v5";
+  var LS_RATED   = "bfp_rated_v5";
+  var LS_ADDED   = "bfp_added_v5";
+  var LS_PEN     = "bfp_pen_v5";
+  var LS_IMPORT  = "bfp_import_v5";  // bulk-imported roster replaces BASE_BEERS
+  var LS_VOTERS  = "bfp_voters_v5";  // [{code, name}]
+  var LS_ME      = "bfp_me_v5";      // {code, name} — logged-in voter
+
+  var votes        = load(LS_VOTES)  || {};
+  var rated        = load(LS_RATED)  || {};
+  var addedBeers   = load(LS_ADDED)  || [];
+  var penalties    = load(LS_PEN)    || {};
+  var importedRoster = load(LS_IMPORT) || null;  // null → use BASE_BEERS
+  var voterList    = load(LS_VOTERS) || [];
+  var meVoter      = load(LS_ME)     || null;
+
+  var BEERS = (importedRoster || BASE_BEERS).concat(addedBeers);
+  var idx = 0;
+
+  /* ---- colour helpers ---- */
+  function hueFor(v){ return Math.max(0, Math.min(130, v/100*130)); }
+  function colorFor(v){ return "hsl("+hueFor(v)+",72%,47%)"; }
+  function colorForA(v,a){ return "hsla("+hueFor(v)+",72%,47%,"+a+")"; }
+
+  /* ============================================================
+     VOTER CODE SYSTEM
+     ============================================================ */
+  var CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // omit 0/O/1/I to avoid confusion
+  function makeCode(name, usedMap){
+    var h = 2166136261;
+    for(var i=0;i<name.length;i++){ h ^= name.charCodeAt(i); h = Math.imul(h,16777619); }
+    h = h>>>0;
+    var base="";
+    for(var j=0;j<4;j++) base += CODE_CHARS[(h>>(j*5)) % CODE_CHARS.length];
+    var code=base, n=0;
+    while(usedMap[code]){ n++; code=base.slice(0,3)+(n%CODE_CHARS.length<10?n:CODE_CHARS[n%CODE_CHARS.length]); }
+    return code;
+  }
+  function findVoter(code){
+    code = code.toUpperCase().trim();
+    for(var i=0;i<voterList.length;i++){ if(voterList[i].code===code) return voterList[i]; }
+    return null;
+  }
+
+  /* ============================================================
+     LOGIN FLOW
+     ============================================================ */
+  var codeInput = document.getElementById("codeInput");
+  var voterNameDisplay = document.getElementById("voterNameDisplay");
+  var loginBtn  = document.getElementById("loginBtn");
+  var loginErr  = document.getElementById("loginErr");
+
+  codeInput.addEventListener("input", function(){
+    var code = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,4);
+    codeInput.value = code;
+    loginErr.textContent = "";
+    if(code.length===4){
+      if(voterList.length===0){
+        voterNameDisplay.textContent = "Guest " + code;
+        loginBtn.disabled = false;
+      } else {
+        var v = findVoter(code);
+        if(v){ voterNameDisplay.textContent = "Welcome, "+v.name+" 👋"; loginBtn.disabled=false; }
+        else  { voterNameDisplay.innerHTML="&nbsp;"; loginBtn.disabled=true; loginErr.textContent="Code not recognised — check with the host"; }
+      }
+    } else {
+      voterNameDisplay.innerHTML="&nbsp;"; loginBtn.disabled=true;
+    }
+  });
+
+  loginBtn.addEventListener("click", doLogin);
+  codeInput.addEventListener("keydown", function(e){ if(e.key==="Enter" && !loginBtn.disabled) doLogin(); });
+
+  function doLogin(){
+    var code = codeInput.value.toUpperCase().trim();
+    var name;
+    if(voterList.length===0){
+      name = "Guest "+code;
+    } else {
+      var v = findVoter(code);
+      if(!v){ loginErr.textContent="Code not recognised"; return; }
+      name = v.name;
+    }
+    meVoter = {code:code, name:name};
+    save(LS_ME, meVoter);
+    showVoting();
+  }
+
+  /* ============================================================
+     SYNTHETIC DEMO DATA  (seeded, stable)
+     ============================================================ */
+  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  var FN=["Alex","Sam","Jordan","Casey","Riley","Morgan","Taylor","Jamie","Charlie","Drew",
+          "Quinn","Avery","Reese","Skyler","Devon","Harper","Rowan","Emerson","Finley","Sage"];
+  var voters=[];
+
+  function genData(){
+    var rnd=mulberry32(424242);
+    BASE_BEERS.forEach(function(b){
+      b._profile={}; SCOREDIMS.forEach(function(d){ b._profile[d]=28+rnd()*64; });
+      b._spread=5+rnd()*20;
+    });
+    voters=[];
+    var NV=48, agg={};
+    BASE_BEERS.forEach(function(b){ agg[b.id]={n:0, sum:{overall:0,taste:0,appearance:0,aroma:0,froth:0}, ov:[]}; });
+    for(var v=0;v<NV;v++){
+      var voter={name:FN[v%FN.length]+" "+String.fromCharCode(65+(v*7%26)), bias:rnd()*36-18, nGiven:0, sumGiven:0};
+      BASE_BEERS.forEach(function(b){
+        if(rnd()<0.74){
+          var a=agg[b.id]; a.n++; var ov=0;
+          SCOREDIMS.forEach(function(d){
+            var val=Math.max(0,Math.min(100, b._profile[d]+voter.bias+(rnd()*2-1)*b._spread));
+            a.sum[d]+=val; if(d==="overall"){ ov=val; a.ov.push(val); }
+          });
+          voter.nGiven++; voter.sumGiven+=ov;
+        }
+      });
+      voters.push(voter);
+    }
+    BASE_BEERS.forEach(function(b){
+      var a=agg[b.id]; b._n=a.n; b._mean={};
+      SCOREDIMS.forEach(function(d){ b._mean[d]= a.n? a.sum[d]/a.n : 0; });
+      b._B=0.5*b._mean.overall+0.3*b._mean.taste+0.1*b._mean.appearance+0.1*b._mean.aroma;
+      b._M=1+b._mean.froth/100; b._best=b._B*b._M;
+      var m=b._mean.overall, s2=0; a.ov.forEach(function(x){ s2+=(x-m)*(x-m); });
+      b._var = a.ov.length? s2/a.ov.length : 0;
+    });
+  }
+
+  function hashSeed(str){ var h=2166136261; for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+
+  function simulateBeer(beer){
+    var rnd=mulberry32(hashSeed(beer.id)||1), profile={}, spread=5+rnd()*20;
+    SCOREDIMS.forEach(function(d){ profile[d]=28+rnd()*64; });
+    var n=0, sum={overall:0,taste:0,appearance:0,aroma:0,froth:0}, ov=[];
+    voters.forEach(function(voter){
+      if(rnd()<0.74){
+        n++;
+        SCOREDIMS.forEach(function(d){
+          var val=Math.max(0,Math.min(100, profile[d]+voter.bias+(rnd()*2-1)*spread));
+          sum[d]+=val; if(d==="overall") ov.push(val);
+        });
+      }
+    });
+    beer._n=n; beer._mean={};
+    SCOREDIMS.forEach(function(d){ beer._mean[d]= n? sum[d]/n : 0; });
+    beer._B=0.5*beer._mean.overall+0.3*beer._mean.taste+0.1*beer._mean.appearance+0.1*beer._mean.aroma;
+    beer._M=1+beer._mean.froth/100; beer._best=beer._B*beer._M;
+    var m=beer._mean.overall, s2=0; ov.forEach(function(x){ s2+=(x-m)*(x-m); });
+    beer._var= ov.length? s2/ov.length : 0;
+  }
+
+  /* ============================================================
+     AWARD ENGINE
+     ============================================================ */
+  function computeAwards(){
+    var qualified = BEERS.filter(function(b){ return b._n>0; });
+    function isPen(b){ return !!penalties[b.id]; }
+
+    function rankDesc(scoreFn, excludeId){
+      var list=qualified.filter(function(b){ return b.id!==excludeId; })
+        .map(function(b){ return {b:b, s:scoreFn(b), pen:isPen(b)}; });
+      var clean=list.filter(function(x){ return !x.pen; }).sort(function(a,b){ return b.s-a.s; });
+      var pen  =list.filter(function(x){ return  x.pen; }).sort(function(a,b){ return b.s-a.s; });
+      var cap = clean.length>=5 ? clean[4].s : (clean.length? clean[clean.length-1].s : 1e9);
+      clean.forEach(function(x){ x.eff=x.s; });
+      pen.forEach(function(x,k){ x.eff=Math.min(x.s,cap)-0.0001*(k+1); });
+      return clean.concat(pen).sort(function(a,b){ return b.eff-a.eff; });
+    }
+    function rankAsc(scoreFn, excludeId){
+      return qualified.filter(function(b){ return b.id!==excludeId; })
+        .map(function(b){ return {b:b, s:scoreFn(b), pen:isPen(b)}; })
+        .sort(function(a,b){ return a.s-b.s; });
+    }
+    function topNov(scoreFn, lowest, minN){
+      return (qualified.filter(function(b){ return !isPen(b)&&b._n>=(minN||1); })
+        .map(function(b){ return {b:b, s:scoreFn(b)}; })
+        .sort(function(a,b){ return lowest?a.s-b.s:b.s-a.s; })[0])||null;
+    }
+
+    var bestRank=rankDesc(function(b){ return b._best; });
+    var winner=bestRank.length? bestRank[0].b : null;
+    var exId=winner? winner.id : null;
+    var r1=function(v){ return v.toFixed(1); }, r0=function(v){ return Math.round(v)+""; };
+
+    return {
+      main:[
+        {title:"🏆 Best Beer",    rank:bestRank,                                         disp:r1, n:6},
+        {title:"Best Appearance", rank:rankDesc(function(b){return b._mean.appearance;},exId), disp:r0, n:6, excl:winner},
+        {title:"Best Aroma",      rank:rankDesc(function(b){return b._mean.aroma;},exId),      disp:r0, n:6, excl:winner},
+        {title:"Best Taste",      rank:rankDesc(function(b){return b._mean.taste;},exId),      disp:r0, n:6, excl:winner}
+      ],
+      last:{title:"🥄 Last Place", rank:rankAsc(function(b){return b._best;},exId), disp:r1, n:3, asc:true, excl:winner},
+      nov:[
+        {t:"Frothiest",        w:topNov(function(b){return b._mean.froth;}),                              f:function(v){return Math.round(v)+" froth";},          d:"Highest average Froth Factor — the beer that frothed people up the most."},
+        {t:"People's Choice",  w:topNov(function(b){return b._mean.overall;}),                            f:function(v){return Math.round(v)+" enjoy";},          d:"Highest average Overall Enjoyment — pure crowd love, before any weighting."},
+        {t:"Most Popular",     w:topNov(function(b){return b._n;}),                                       f:function(v){return v+" votes";},                      d:"Rated by the most people — the beer everyone made sure to taste."},
+        {t:"Love It or Hate It",w:topNov(function(b){return b._var;},false,2),                            f:function(v){return "σ "+Math.sqrt(v).toFixed(1);},d:"Biggest spread of scores — the most divisive beer of the night."},
+        {t:"Unanimous",        w:topNov(function(b){return b._var;},true,2),                              f:function(v){return "σ "+Math.sqrt(v).toFixed(1);},d:"Smallest spread of scores — the beer voters agreed on most."},
+        {t:"Dark Horse",       w:topNov(function(b){return (b._mean.taste+b._mean.overall)/2-b._mean.appearance;}), f:function(v){return "+"+v.toFixed(0)+" vs looks";},d:"Tastes far better than it looks — high Taste/Overall but low Appearance."},
+        {t:"All Foam, No Beer",w:topNov(function(b){return b._mean.froth-b._B;}),                         f:function(v){return "+"+v.toFixed(0)+" hype";},        d:"Lots of froth but a weak underlying score — style over substance."},
+        {t:"Catfish",          w:topNov(function(b){return Math.abs(b._mean.aroma-b._mean.taste);}),      f:function(v){return "Δ"+v.toFixed(0)+" nose/taste";},d:"Biggest gap between Aroma and Taste — smells nothing like it tastes."}
+      ],
+      voter:(function(){
+        var voted=voters.filter(function(v){ return v.nGiven>=5; });
+        voted.forEach(function(v){ v.avg=v.sumGiven/v.nGiven; });
+        return [
+          {t:"Toughest Critic", w:voted.slice().sort(function(a,b){return a.avg-b.avg;})[0],   f:function(v){return "avg "+Math.round(v.avg);}, d:"Lowest average scores across beers rated (min 5)."},
+          {t:"Most Generous",   w:voted.slice().sort(function(a,b){return b.avg-a.avg;})[0],   f:function(v){return "avg "+Math.round(v.avg);}, d:"Highest average scores across beers rated (min 5)."},
+          {t:"Iron Palate",     w:voters.slice().sort(function(a,b){return b.nGiven-a.nGiven;})[0], f:function(v){return v.nGiven+" beers";},   d:"Rated the most beers — the most dedicated palate of the night."}
+        ];
+      })()
+    };
+  }
+
+  /* ============================================================
+     ADMIN RENDERING
+     ============================================================ */
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+
+  function beerMeta(b){
+    var parts=[];
+    var bnum=BEERS.indexOf(b)+1; if(bnum>0) parts.push("#"+bnum);
+    if(b.abv) parts.push(b.abv+" ABV");
+    if(b.style) parts.push(b.style);
+    return parts.join(" · ");
+  }
+
+  function rankListHTML(award){
+    var rows="", arr=award.rank, cnt=Math.min(award.n, arr.length);
+    for(var i=0;i<cnt;i++){
+      var x=arr[i];
+      var pos = award.asc?(i===0?"🥄":(i+1)):(i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1));
+      rows+='<div class="rrow'+(i===0?" top":"")+'">'+
+        '<span class="pos">'+pos+'</span>'+
+        '<span class="rinfo">'+
+          '<div class="rn">'+esc(x.b.name)+(x.pen?' <span class="pentag">PENALISED</span>':'')+'</div>'+
+          '<div class="rmeta">'+esc(beerMeta(x.b))+'</div>'+
+        '</span>'+
+        '<span class="rs">'+award.disp(x.s)+'</span></div>';
+    }
+    return rows;
+  }
+  function awardCardHTML(award){
+    var excl=award.excl?'<div class="excl">Best Beer winner "'+esc(award.excl.name)+'" excluded from this category</div>':"";
+    return '<div class="awardCard"><h4>'+award.title+'</h4>'+excl+rankListHTML(award)+'</div>';
+  }
+  function novCardHTML(n){
+    var name="—", val="";
+    if(n.w){ name=n.w.b?n.w.b.name:n.w.name; val=n.w.b?n.f(n.w.s):n.f(n.w); }
+    return '<div class="novCard"><div class="nt">'+esc(n.t)+'</div><div class="nw">'+esc(name)+'</div>'+
+      (val?'<div class="nv">'+esc(val)+'</div>':'')+
+      (n.d?'<div class="nd">'+esc(n.d)+'</div>':'')+'</div>';
+  }
+
+  var AWARD_TABS=[
+    {key:"bonus",      label:"Bonus Awards"},
+    {key:"appearance", label:"Appearance"},
+    {key:"aroma",      label:"Aroma"},
+    {key:"taste",      label:"Taste"},
+    {key:"last",       label:"Last Place"},
+    {key:"best",       label:"Best Beer"}
+  ];
+  var awardTab="bonus";
+
+  function renderResults(){
+    var A=computeAwards();
+    var bar='<select class="adrop" id="awardSelect" aria-label="Choose award">';
+    AWARD_TABS.forEach(function(t){ bar+='<option value="'+t.key+'"'+(t.key===awardTab?" selected":"")+'>'+t.label+'</option>'; });
+    bar+='</select>';
+    var content="";
+    if(awardTab==="bonus"){
+      content+='<div class="sech">Bonus — Beers</div><div class="novGrid">';
+      A.nov.forEach(function(n){ content+=novCardHTML(n); });
+      content+='</div><div class="sech">Bonus — People</div><div class="novGrid">';
+      A.voter.forEach(function(n){ content+=novCardHTML(n); });
+      content+='</div>';
+    } else if(awardTab==="best")      { content=awardCardHTML(A.main[0]); }
+    else if(awardTab==="appearance")  { content=awardCardHTML(A.main[1]); }
+    else if(awardTab==="aroma")       { content=awardCardHTML(A.main[2]); }
+    else if(awardTab==="taste")       { content=awardCardHTML(A.main[3]); }
+    else if(awardTab==="last")        { content=awardCardHTML(A.last); }
+    document.getElementById("resultsBody").innerHTML=bar+content;
+    var sel=document.getElementById("awardSelect");
+    sel.addEventListener("change", function(){ awardTab=sel.value; renderResults(); });
+  }
+
+  function renderRoster(){
+    var body=document.getElementById("rosterBody"); body.innerHTML="";
+    BEERS.forEach(function(b,i){
+      var isNew=i>=(importedRoster||BASE_BEERS).length;
+      var row=document.createElement("div");
+      row.className="rosRow"+(penalties[b.id]?" pen":"");
+      var metaStr=[b.abv,b.style].filter(Boolean).join(" · ");
+      row.innerHTML=
+        '<span class="badge">'+(i+1)+'</span>'+
+        '<span class="info"><span class="nm">'+esc(b.name)+(isNew?' <span class="newtag">NEW</span>':'')+'</span>'+
+        '<span class="st">'+esc(metaStr)+'</span></span>'+
+        '<label class="penlabel"><input type="checkbox" '+(penalties[b.id]?"checked":"")+'/> Penalise</label>';
+      var cb=row.querySelector("input");
+      cb.addEventListener("change", function(){
+        if(cb.checked) penalties[b.id]=true; else delete penalties[b.id];
+        save(LS_PEN,penalties); row.classList.toggle("pen",cb.checked); renderResults();
+      });
+      body.appendChild(row);
+    });
+  }
+
+  function renderVoters(){
+    var wrap=document.getElementById("voterTableWrap");
+    if(!voterList.length){
+      wrap.innerHTML='<p style="text-align:center;color:var(--muted);font-size:13px;padding:12px 0;">No voters registered yet.<br>In open mode any 4-char code is accepted.</p>';
+      return;
+    }
+    var html='<div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px;">'+
+      '<span style="font-size:13px;color:var(--muted);">'+voterList.length+' voter'+(voterList.length!==1?'s':'')+' registered</span>'+
+      '<button class="copyAllBtn" id="copyAllBtn">Copy all codes</button></div>';
+    html+='<table class="vtable"><thead><tr><th>#</th><th>Name</th><th>Code</th></tr></thead><tbody>';
+    voterList.forEach(function(v,i){
+      html+='<tr><td style="color:var(--muted);">'+(i+1)+'</td><td>'+esc(v.name)+'</td><td><span class="vcode">'+esc(v.code)+'</span></td></tr>';
+    });
+    html+='</tbody></table>';
+    wrap.innerHTML=html;
+    document.getElementById("copyAllBtn").addEventListener("click",function(){
+      var text=voterList.map(function(v){ return v.name+": "+v.code; }).join("\n");
+      var btn=document.getElementById("copyAllBtn");
+      if(navigator.clipboard){ navigator.clipboard.writeText(text).then(function(){ btn.textContent="Copied!"; setTimeout(function(){ btn.textContent="Copy all codes"; },1800); }); }
+      else { prompt("Copy these codes:",text); }
+    });
+  }
+
+  /* ============================================================
+     BULK IMPORTS
+     ============================================================ */
+  function parseBulkBeers(raw){
+    var out=[];
+    raw.split(";").forEach(function(chunk){
+      chunk=chunk.trim(); if(!chunk) return;
+      var p=chunk.split(",").map(function(s){ return s.trim(); });
+      if(p.length<2||!p[1]) return;
+      var num=parseInt(p[0])||0, name=p[1], abv=p[2]||"", style=p[3]||"";
+      out.push({id:"imp_"+num+"_"+hashSeed(name+style), name:name, brewery:"", abv:abv, style:style, _ord:num});
+    });
+    out.sort(function(a,b){ return a._ord-b._ord; });
+    return out;
+  }
+
+  document.getElementById("bulkBeerBtn").addEventListener("click", function(){
+    var raw=document.getElementById("bulkBeerInput").value;
+    var msg=document.getElementById("bulkBeerMsg");
+    if(!raw.trim()){ msg.className="bulkMsg err"; msg.textContent="Nothing to import."; return; }
+    var imported=parseBulkBeers(raw);
+    if(!imported.length){ msg.className="bulkMsg err"; msg.textContent="Could not parse any beers — check the format."; return; }
+    importedRoster=imported;
+    addedBeers=[];  // clear one-off adds too when doing a full import
+    save(LS_IMPORT, importedRoster); save(LS_ADDED, addedBeers);
+    BEERS=importedRoster.concat(addedBeers);
+    genData(); importedRoster.forEach(function(b){ simulateBeer(b); });
+    buildSheet(); renderRoster(); renderResults();
+    msg.className="bulkMsg"; msg.textContent="Imported "+imported.length+" beer"+(imported.length!==1?"s":"")+".";
+    document.getElementById("bulkBeerInput").value="";
+  });
+
+  document.getElementById("bulkVoterBtn").addEventListener("click", function(){
+    var raw=document.getElementById("bulkVoterInput").value;
+    var msg=document.getElementById("bulkVoterMsg");
+    var lines=raw.split("\n").map(function(s){ return s.trim(); }).filter(Boolean);
+    if(!lines.length){ msg.className="bulkMsg err"; msg.textContent="No entries found."; return; }
+
+    var usedMap={};
+    voterList.forEach(function(v){ usedMap[v.code]=true; });
+
+    var added=0, skippedDupName=[], skippedDupCode=[], skippedBadCode=[];
+
+    lines.forEach(function(line){
+      var comma=line.indexOf(",");
+      var name, rawCode;
+      if(comma!==-1){
+        name=line.slice(0,comma).trim();
+        rawCode=line.slice(comma+1).trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
+      } else {
+        name=line.trim();
+        rawCode="";
+      }
+      if(!name) return;
+
+      // skip duplicate name
+      if(voterList.some(function(v){ return v.name.toLowerCase()===name.toLowerCase(); })){
+        skippedDupName.push(name); return;
+      }
+
+      var code;
+      if(rawCode){
+        // validate supplied code: 2–6 alphanumeric
+        if(rawCode.length<2||rawCode.length>6){ skippedBadCode.push(name+" ("+rawCode+")"); return; }
+        if(usedMap[rawCode]){ skippedDupCode.push(name+" ("+rawCode+")"); return; }
+        code=rawCode;
+      } else {
+        code=makeCode(name,usedMap);
+      }
+
+      usedMap[code]=true;
+      voterList.push({code:code, name:name});
+      added++;
+    });
+
+    save(LS_VOTERS, voterList);
+
+    var parts=[added+" voter"+(added!==1?"s":"")+" added ("+voterList.length+" total)."];
+    if(skippedDupName.length)  parts.push("Skipped (already exists): "+skippedDupName.join(", ")+".");
+    if(skippedDupCode.length)  parts.push("Skipped (code already taken): "+skippedDupCode.join(", ")+".");
+    if(skippedBadCode.length)  parts.push("Skipped (invalid code, must be 2–6 letters/numbers): "+skippedBadCode.join(", ")+".");
+
+    var hasErrors=(skippedDupCode.length||skippedBadCode.length)>0;
+    msg.className=hasErrors?"bulkMsg err":"bulkMsg";
+    msg.textContent=parts.join(" ");
+
+    if(added>0) document.getElementById("bulkVoterInput").value="";
+    renderVoters();
+  });
+
+  /* ============================================================
+     VOTING VIEW
+     ============================================================ */
+  var S=300, C=S/2, MAXR=104, LABELR=126, ND=DIMS.length;
+  function angleFor(i){ return (-90+i*360/ND)*Math.PI/180; }
+  function dir(i){ var a=angleFor(i); return {x:Math.cos(a), y:Math.sin(a)}; }
+  function pt(i,val){ var d=dir(i), r=MAXR*(val/100); return {x:C+r*d.x, y:C+r*d.y}; }
+  var svg=document.getElementById("radar");
+  function el(tag,attrs){ var e=document.createElementNS("http://www.w3.org/2000/svg",tag); for(var k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+  var poly, handles=[];
+  function buildRadar(){
+    svg.innerHTML="";
+    [0.34,0.67,1].forEach(function(f){ svg.appendChild(el("circle",{class:"ring",cx:C,cy:C,r:MAXR*f})); });
+    for(var i=0;i<ND;i++){
+      var d=dir(i), ox=C+MAXR*d.x, oy=C+MAXR*d.y;
+      svg.appendChild(el("line",{class:"spoke",x1:C,y1:C,x2:ox,y2:oy}));
+      var lx=C+LABELR*d.x, ly=C+LABELR*d.y;
+      var anchor=d.x>0.3?"start":(d.x<-0.3?"end":"middle"), baseline=d.y>0.3?"hanging":(d.y<-0.3?"auto":"middle");
+      var t=el("text",{class:"axislabel"+(DIMS[i].froth?" froth":""),x:lx,y:ly,"text-anchor":anchor,"dominant-baseline":baseline});
+      t.textContent=DIMS[i].label; svg.appendChild(t);
+    }
+    poly=el("polygon",{class:"poly",points:""}); svg.appendChild(poly);
+    handles=[];
+    for(var j=0;j<ND;j++){
+      var hit=el("circle",{class:"hit",r:22}), h=el("circle",{class:"handle"+(DIMS[j].froth?" froth":""),r:DIMS[j].froth?8:7});
+      svg.appendChild(hit); svg.appendChild(h); handles.push({hit:hit,dot:h});
+      attachDrag(hit,j); attachDrag(h,j);
+    }
+    updateRadar();
+  }
+  function curVotes(){
+    var id=BEERS[idx].id;
+    if(!votes[id]){ votes[id]={}; DIMS.forEach(function(dm){ votes[id][dm.key]=50; }); }
+    return votes[id];
+  }
+  function updateRadar(){
+    var v=curVotes(), pts=[], sum=0;
+    for(var i=0;i<ND;i++){
+      var val=v[DIMS[i].key], p=pt(i,val);
+      pts.push(p.x.toFixed(1)+","+p.y.toFixed(1));
+      handles[i].dot.setAttribute("cx",p.x); handles[i].dot.setAttribute("cy",p.y); handles[i].dot.setAttribute("fill",colorFor(val));
+      handles[i].hit.setAttribute("cx",p.x); handles[i].hit.setAttribute("cy",p.y);
+      sum+=val;
+    }
+    var avg=sum/ND;
+    poly.setAttribute("points",pts.join(" ")); poly.setAttribute("fill",colorForA(avg,0.26)); poly.setAttribute("stroke",colorFor(avg));
+  }
+  function svgPoint(evt){ var r=svg.getBoundingClientRect(); return {x:(evt.clientX-r.left)*(S/r.width), y:(evt.clientY-r.top)*(S/r.height)}; }
+  function attachDrag(node,i){
+    node.addEventListener("pointerdown",function(e){
+      e.preventDefault(); try{ node.setPointerCapture(e.pointerId); }catch(_){}
+      function move(ev){ var p=svgPoint(ev), d=dir(i); var proj=(p.x-C)*d.x+(p.y-C)*d.y; setValue(i, Math.max(0,Math.min(MAXR,proj))/MAXR*100); }
+      function up(){ node.removeEventListener("pointermove",move); node.removeEventListener("pointerup",up); node.removeEventListener("pointercancel",up); try{ node.releasePointerCapture(e.pointerId); }catch(_){} }
+      node.addEventListener("pointermove",move); node.addEventListener("pointerup",up); node.addEventListener("pointercancel",up); move(e);
+    });
+  }
+  function setValue(i,val){
+    var id=BEERS[idx].id; curVotes()[DIMS[i].key]=val;
+    if(!rated[id]){ rated[id]=true; renderProgress(); updateSheetItem(idx); }
+    updateRadar(); setSlider(DIMS[i].key,val); persist();
+  }
+  function buildSliders(){
+    var wrap=document.getElementById("sliders"); wrap.innerHTML="";
+    DIMS.forEach(function(dm,i){
+      var row=document.createElement("div"); row.className="srow"+(dm.froth?" froth":"");
+      row.innerHTML='<div class="lab"><span class="dim">'+dm.label+
+        (dm.froth?'<span class="frothDesc"> · multiplies your final score</span>':'')+
+        '</span></div>'+
+        '<input id="rng_'+dm.key+'" type="range" min="0" max="100" step="1" class="'+(dm.froth?'froth':'')+'"/>'+
+        '<div class="anchors"><span>'+dm.low+'</span><span>'+dm.high+'</span></div>';
+      wrap.appendChild(row);
+      var rng=row.querySelector("input");
+      rng.addEventListener("input", function(){ setValue(i,+rng.value); });
+    });
+  }
+  function setSlider(key,val){ var s=document.getElementById("rng_"+key); if(s){ s.value=val; s.style.setProperty("--thumb",colorFor(val)); } }
+  function syncSliders(){ var v=curVotes(); DIMS.forEach(function(dm){ setSlider(dm.key,v[dm.key]); }); }
+
+  var sheet=document.getElementById("sheet"), sheetList=document.getElementById("sheetList");
+  function buildSheet(){
+    sheetList.innerHTML="";
+    BEERS.forEach(function(b,i){
+      var item=document.createElement("button"); item.className="item"; item.id="sheet_"+i;
+      var stMeta=[b.abv,b.style].filter(Boolean).join(" · ");
+      item.innerHTML='<span class="badge">'+(i+1)+'</span>'+
+        '<span class="info"><span class="nm">'+esc(b.name)+'</span><span class="st">'+esc(stMeta)+'</span></span>'+
+        '<span class="tick">✓</span>';
+      var tick=item.querySelector(".tick"); tick.id="tick_"+i; tick.style.display=rated[b.id]?"":"none";
+      item.addEventListener("click", function(){ idx=i; closeSheet(); renderAll(); window.scrollTo(0,0); });
+      sheetList.appendChild(item);
+    });
+  }
+  function updateSheetItem(i){ var t=document.getElementById("tick_"+i); if(t) t.style.display=rated[BEERS[i].id]?"":"none"; }
+  function refreshSheetActive(){ BEERS.forEach(function(b,i){ var it=document.getElementById("sheet_"+i); if(it) it.classList.toggle("active",i===idx); updateSheetItem(i); }); }
+  function openSheet(){ refreshSheetActive(); sheet.classList.add("open"); var a=document.getElementById("sheet_"+idx); if(a) a.scrollIntoView({block:"center"}); }
+  function closeSheet(){ sheet.classList.remove("open"); }
+
+  function renderHead(){
+    var b=BEERS[idx];
+    document.getElementById("beerOrd").textContent="#"+(idx+1);
+    document.getElementById("beerName").textContent=b.name;
+    document.getElementById("beerMeta").textContent=[b.brewery,b.style].filter(Boolean).join(" · ");
+    var abvEl=document.getElementById("beerAbv");
+    if(b.abv){ abvEl.textContent=b.abv+" ABV"; abvEl.style.display=""; }
+    else { abvEl.style.display="none"; }
+    document.getElementById("posText").textContent="Beer "+(idx+1)+" of "+BEERS.length;
+    document.getElementById("prevBtn").disabled=(idx===0);
+    var nx=document.getElementById("nextBtn");
+    nx.textContent = (idx===BEERS.length-1) ? "Mission Accomplished 🎉" : "Next beer ›";
+    nx.disabled=false;
+  }
+  function renderProgress(){
+    var done=BEERS.filter(function(b){ return rated[b.id]; }).length;
+    document.getElementById("pcount").textContent=done;
+    document.getElementById("ptotal").textContent=BEERS.length;
+    document.getElementById("progfill").style.width=(done/BEERS.length*100)+"%";
+  }
+  function renderAll(){ renderHead(); renderProgress(); curVotes(); updateRadar(); syncSliders(); refreshSheetActive(); }
+
+  var savedTimer;
+  function persist(){
+    save(LS_VOTES,votes); save(LS_RATED,rated);
+    var s=document.getElementById("saved"); s.classList.add("show");
+    clearTimeout(savedTimer); savedTimer=setTimeout(function(){ s.classList.remove("show"); },900);
+  }
+  function save(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(_){} }
+  function load(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(_){ return null; } }
+
+  function rebuildRoster(){
+    BEERS=(importedRoster||BASE_BEERS).concat(addedBeers);
+    buildSheet(); renderRoster();
+  }
+
+  /* ============================================================
+     VIEW SWITCHING
+     ============================================================ */
+  function showVoting(){
+    ["loginView","adminView","doneView"].forEach(function(id){ document.getElementById(id).classList.add("hidden"); });
+    document.getElementById("voteView").classList.remove("hidden");
+    renderAll(); window.scrollTo(0,0);
+  }
+  function showAdmin(){
+    ["voteView","loginView","doneView"].forEach(function(id){ document.getElementById(id).classList.add("hidden"); });
+    document.getElementById("adminView").classList.remove("hidden");
+    renderResults(); renderRoster(); renderVoters(); window.scrollTo(0,0);
+  }
+  function showDone(){
+    var done=BEERS.filter(function(b){ return rated[b.id]; }).length;
+    var total=BEERS.length;
+    document.getElementById("doneRated").textContent=done;
+    document.getElementById("doneTotal").textContent=total;
+    document.getElementById("donePct").textContent=Math.round(done/total*100)+"%";
+    ["voteView","adminView","loginView"].forEach(function(id){ document.getElementById(id).classList.add("hidden"); });
+    document.getElementById("doneView").classList.remove("hidden");
+    window.scrollTo(0,0);
+  }
+
+  /* ============================================================
+     ADMIN PASSWORD
+     ============================================================ */
+  var adminUnlocked=false;
+  var pwModal=document.getElementById("pwModal");
+  document.getElementById("adminBtn").addEventListener("click", function(){
+    if(adminUnlocked){ showAdmin(); return; }
+    pwModal.classList.remove("hidden");
+    document.getElementById("pwInput").value=""; document.getElementById("pwErr").textContent="";
+    setTimeout(function(){ document.getElementById("pwInput").focus(); },50);
+  });
+  function tryPassword(){
+    if(document.getElementById("pwInput").value===ADMIN_PASS){
+      pwModal.classList.add("hidden"); adminUnlocked=true; showAdmin();
+    } else {
+      document.getElementById("pwErr").textContent="Incorrect password";
+      document.getElementById("pwInput").value=""; document.getElementById("pwInput").focus();
+    }
+  }
+  document.getElementById("pwGo").addEventListener("click", tryPassword);
+  document.getElementById("pwInput").addEventListener("keydown", function(e){ if(e.key==="Enter") tryPassword(); });
+
+  /* ============================================================
+     EVENT WIRING
+     ============================================================ */
+  document.getElementById("prevBtn").addEventListener("click", function(){ if(idx>0){ idx--; renderAll(); window.scrollTo(0,0); } });
+  document.getElementById("nextBtn").addEventListener("click", function(){
+    if(idx===BEERS.length-1){ showDone(); } else { idx++; renderAll(); window.scrollTo(0,0); }
+  });
+  document.getElementById("posPill").addEventListener("click", openSheet);
+  document.getElementById("sheetBackdrop").addEventListener("click", closeSheet);
+  document.getElementById("sheetClose").addEventListener("click", closeSheet);
+  document.getElementById("doneBack").addEventListener("click", showVoting);
+  document.getElementById("resetBtn").addEventListener("click", function(){
+    if(!confirm("Clear all ratings on this device?")) return;
+    votes={}; rated={}; idx=0; persist(); renderAll();
+  });
+  document.getElementById("backBtn").addEventListener("click", showVoting);
+
+  /* admin tab switching */
+  function switchAdminTab(activeId, paneId){
+    ["tabResults","tabRoster","tabVoters"].forEach(function(id){ document.getElementById(id).classList.remove("on"); });
+    ["resultsPane","rosterPane","votersPane"].forEach(function(id){ document.getElementById(id).classList.add("hidden"); });
+    document.getElementById(activeId).classList.add("on");
+    document.getElementById(paneId).classList.remove("hidden");
+  }
+  document.getElementById("tabResults").addEventListener("click", function(){ switchAdminTab("tabResults","resultsPane"); });
+  document.getElementById("tabRoster").addEventListener("click",  function(){ switchAdminTab("tabRoster","rosterPane"); });
+  document.getElementById("tabVoters").addEventListener("click",  function(){ switchAdminTab("tabVoters","votersPane"); });
+
+  /* single-beer add */
+  document.getElementById("addBtn").addEventListener("click", function(){
+    var name=document.getElementById("addName").value.trim();
+    if(!name){ alert("Enter a beer name"); return; }
+    var nb={
+      id:"add_"+Date.now(),
+      name:name,
+      brewery:document.getElementById("addBrew").value.trim(),
+      abv:document.getElementById("addAbv").value.trim(),
+      style:document.getElementById("addStyle").value.trim()
+    };
+    addedBeers.push(nb); save(LS_ADDED,addedBeers);
+    BEERS=(importedRoster||BASE_BEERS).concat(addedBeers);
+    genData(); BEERS.forEach(function(b){ if(!b._n) simulateBeer(b); });
+    buildSheet(); renderRoster();
+    ["addName","addBrew","addAbv","addStyle"].forEach(function(id){ document.getElementById(id).value=""; });
+  });
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  genData();
+  if(importedRoster) importedRoster.forEach(function(b){ simulateBeer(b); });
+  addedBeers.forEach(function(b){ simulateBeer(b); });
+  buildRadar(); buildSliders(); buildSheet();
+
+  if(meVoter){
+    showVoting();
+  } else {
+    document.getElementById("loginView").classList.remove("hidden");
+  }
+})();
+</script>
+</body>
+</html>
